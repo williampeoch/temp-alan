@@ -85,8 +85,8 @@ export default function Home() {
             >
               <div
                 className={`${
-                  message.from === 'user' ? 'bg-blue-500' : 'bg-gray-300'
-                } p-3 rounded-lg max-w-xs text-white ${
+                  message.from === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'
+                } p-3 rounded-lg max-w-xs  ${
                   message.from === 'user' ? 'rounded-br-none' : 'rounded-bl-none'
                 }`}
               >
@@ -113,7 +113,7 @@ export default function Home() {
         <div className="flex">
           <input
             type="text"
-            className="flex-1 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-blue-500 text-black"
             placeholder="Tapez votre message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}

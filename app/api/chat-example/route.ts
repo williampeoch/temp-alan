@@ -13,7 +13,9 @@ export async function POST(req: Request) {
     }
 
     // Construction des messages à envoyer à l'API
-    const messages = [];
+    const messages = [
+      { role: 'system', content: "Act as a general practicioner. You need to help the person in front of you. If the patient have a problem that can be visualized ask him to take a picture to show you. Be concise, send a message sentence by sentence, dont send a paragraph." }
+    ];
 
     // Ajouter l'historique des messages
     history.forEach((msg: { text: string; from: string }) => {
