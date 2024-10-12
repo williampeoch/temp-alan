@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import CustomWebcam from '@/components/CustomWebcam';
+import pixtralAnswer from './api/chat-example/route';
 
 
 export default function Home() {
@@ -12,17 +13,19 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [imgSrc, setImgSrc] = useState(null);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() === '') return;
     
     setMessages([...messages, { text: input, from: 'user' }]);
     setInput('');
-    
+
+    const test = await pixtralAnswer(input, 'https://w0.peakpx.com/wallpaper/445/263/HD-wallpaper-crazy-dog-funny-crazy-animals-dogs.jpg')
+    console.log(test)
     // Simuler une réponse du bot
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { text: "Je suis un bot, je vais réfléchir à ça...", from: 'bot' },
+        { text: 'aaaa', from: 'bot' },
       ]);
     }, 1000);
   };
