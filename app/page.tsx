@@ -3,7 +3,6 @@
 import { useState } from 'react';
 
 import CustomWebcam from '@/components/CustomWebcam';
-import { Camera } from 'react-camera-pro';
 
 
 export default function Home() {

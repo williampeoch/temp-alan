@@ -1,3 +1,11 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "react/prop-types": "off", // Disable prop-types if you're using TypeScript
+    "react-hooks/rules-of-hooks": "error", // Ensure hooks are called correctly
+    "react-hooks/exhaustive-deps": "warn", // Warns if dependencies are missing in useEffect/useCallback
+    "no-unused-vars": "warn", // Warn on unused variables
+    "react/no-unstable-nested-components": "off",
+    "@typescript-eslint/no-explicit-any": "off"
+  }
 }
