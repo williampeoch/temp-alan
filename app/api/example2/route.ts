@@ -1,38 +1,27 @@
 import { streamText } from 'ai';
 import { mistral } from '@ai-sdk/mistral';
 
+// Fonction qui traite les requêtes POST
 export async function POST(req: Request) {
   try {
+    // Afficher le contenu de la requête pour déboguer
     const body = await req.json();
     console.log('Requête reçue avec le corps suivant :', body);
     
-    const { text, image, history } = body;
+    const { text, image } = body;
 
-    if (!text && !image && (!history || history.length === 0)) {
-      throw new Error('Aucun texte, image, ou historique fourni');
+    if (!text && !image) {
+      throw new Error('Aucun texte ni image fournis');
     }
 
-    // Construction des messages à envoyer à l'API
+    // Construction du message à envoyer à l'API
     const messages = [];
-
-    // Ajouter l'historique des messages
-    history.forEach((msg: { text: string; from: string }) => {
-      messages.push({
-        role: msg.from === 'user' ? 'user' : 'assistant',
-        content: msg.text,
-      });
-    });
-
-    // Ajouter le nouveau message de l'utilisateur
     if (text) {
-      messages.push({ role: 'user', content: text });
+      messages.push({ type: 'text', text });
     }
     if (image) {
       try {
-        messages.push({ role: 'user', content: [
-          { type: 'text', text: 'Here is an image:' },
-          { type: 'image', image: "data:image/webp;base64"+image }
-        ]});
+        messages.push({ type: 'image', image: new URL(image) });
       } catch (error) {
         console.error('Erreur lors de la conversion de l\'URL de l\'image :', error);
         throw new Error('URL d\'image invalide');
@@ -44,19 +33,23 @@ export async function POST(req: Request) {
     // Appel à l'API de streamText avec le modèle Mistral et les messages
     const response = await streamText({
       model: mistral('pixtral-12b-2409'),
-      messages,
+      messages: [
+        { role: 'user', content: messages },  // Envoi du texte et de l'image
+      ],
     });
 
     // Conversion de la réponse en flux de texte
-    const streamResponse = await response.toTextStreamResponse({
+    const yes = await response.toTextStreamResponse({
       headers: {
         'Content-Type': 'text/event-stream',
       },
     });
 
-    return streamResponse;
+    return yes;  // Renvoi de la réponse
   } catch (error) {
+    // Journalisation de l'erreur pour déboguer
     console.error('Erreur lors de la génération de la réponse :', error);
+
     return new Response(JSON.stringify({ error: 'Erreur lors de la génération de la réponse' }), {
       status: 500,
     });

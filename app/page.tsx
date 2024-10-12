@@ -5,7 +5,7 @@ import CustomWebcam from '@/components/CustomWebcam';
 
 export default function Home() {
   const [messages, setMessages] = useState([
-    { text: 'Bonjour ! Comment puis-je vous aider aujourd’hui ?', from: 'bot' },
+    { text: 'Hello, what medical problem can I help you with?', from: 'Doctor' },
   ]);
   const [input, setInput] = useState('');
   const [imgSrc, setImgSrc] = useState<string | null>(null);
@@ -16,22 +16,26 @@ export default function Home() {
     if (input.trim() === '' && !imgSrc) return;
 
     const userMessage = { text: input, from: 'user', image: imgSrc || null };
-    setMessages([...messages, userMessage]);
+    
+    // Append user message to messages state
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInput('');
     setLoading(true);
 
     try {
+      // Sending the message and history to the API
       const response = await fetch('/api/chat-example', {
         method: 'POST',
         body: JSON.stringify({
           text: input,
           image: imgSrc,
+          history: messages.map(msg => ({ text: msg.text, from: msg.from })), // Send full message history
         }),
         headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.body) {
-        throw new Error('Pas de body dans la réponse');
+        throw new Error('No body in response');
       }
 
       const reader = response.body.getReader();
@@ -43,22 +47,24 @@ export default function Home() {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         result += decoder.decode(value, { stream: true });
-
-        setMessages((prev) => [
-          ...prev.slice(0, -1),
-          { text: result, from: 'bot' },
-        ]);
       }
+
+      // Append bot response to messages state
+      const botMessage = { text: result, from: 'bot' };
+      setMessages((prev) => [...prev, botMessage]);
+
     } catch (error) {
-      console.error('Erreur dans la génération de la réponse IA :', error);
+      console.error('Error in AI response generation:', error);
       setMessages((prev) => [
         ...prev,
-        { text: "Désolé, quelque chose s'est mal passé.", from: 'bot' },
+        { text: "Sorry, something went wrong.", from: 'bot' },
       ]);
     } finally {
       setLoading(false);
+      setImgSrc(null); // Clear the image after sending
     }
   };
+  
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
