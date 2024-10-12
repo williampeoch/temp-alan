@@ -1,33 +1,63 @@
-"use client"
+"use client";
 
 import { useState } from 'react';
-
 import CustomWebcam from '@/components/CustomWebcam';
-import pixtralAnswer from './api/chat-example/route';
-
 
 export default function Home() {
   const [messages, setMessages] = useState([
     { text: 'Bonjour ! Comment puis-je vous aider aujourd’hui ?', from: 'bot' },
   ]);
   const [input, setInput] = useState('');
-  const [imgSrc, setImgSrc] = useState(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showWebcam, setShowWebcam] = useState(false);
 
   const handleSend = async () => {
-    if (input.trim() === '') return;
-    
-    setMessages([...messages, { text: input, from: 'user' }]);
-    setInput('');
+    if (input.trim() === '' && !imgSrc) return;
 
-    const test = await pixtralAnswer(input, 'https://w0.peakpx.com/wallpaper/445/263/HD-wallpaper-crazy-dog-funny-crazy-animals-dogs.jpg')
-    console.log(test)
-    // Simuler une réponse du bot
-    setTimeout(() => {
+    const userMessage = { text: input, from: 'user', image: imgSrc || null };
+    setMessages([...messages, userMessage]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/chat-example', {
+        method: 'POST',
+        body: JSON.stringify({
+          text: input,
+          image: imgSrc,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.body) {
+        throw new Error('Pas de body dans la réponse');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        result += decoder.decode(value, { stream: true });
+
+        setMessages((prev) => [
+          ...prev.slice(0, -1),
+          { text: result, from: 'bot' },
+        ]);
+      }
+    } catch (error) {
+      console.error('Erreur dans la génération de la réponse IA :', error);
       setMessages((prev) => [
         ...prev,
-        { text: 'aaaa', from: 'bot' },
+        { text: "Désolé, quelque chose s'est mal passé.", from: 'bot' },
       ]);
-    }, 1000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,14 +85,24 @@ export default function Home() {
                 }`}
               >
                 {message.text}
+                {/* Affichage de l'image si présente */}
+                {message.image && (
+                  <img
+                    src={message.image}
+                    alt="Image envoyée par l'utilisateur"
+                    className="mt-2 max-w-full rounded-lg"
+                  />
+                )}
               </div>
             </div>
           ))}
         </div>
-        <CustomWebcam imgSrc={imgSrc} setImgSrc={setImgSrc}/>
+
+        {/* Composant CustomWebcam pour capturer une image */}
+        {showWebcam && <CustomWebcam imgSrc={imgSrc} setImgSrc={setImgSrc} />}
       </div>
 
-      {/* Input */}
+      {/* Input pour le message texte */}
       <div className="p-4 bg-white border-t border-gray-300">
         <div className="flex">
           <input
@@ -76,10 +116,19 @@ export default function Home() {
           <button
             className="ml-2 bg-blue-500 text-white px-4 py-2 rounded-lg"
             onClick={handleSend}
+            disabled={loading}
           >
-            Envoyer
+            {loading ? 'Envoi...' : 'Envoyer'}
           </button>
         </div>
+
+        {/* Bouton pour afficher la webcam */}
+        <button
+          className="mt-2 w-full bg-green-500 text-white px-4 py-2 rounded-lg"
+          onClick={() => setShowWebcam((prev) => !prev)}
+        >
+          {showWebcam ? 'Masquer la webcam' : 'Ouvrir la webcam'}
+        </button>
       </div>
     </div>
   );
